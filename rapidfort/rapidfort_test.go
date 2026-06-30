@@ -22,14 +22,16 @@ func TestUpdater_Update(t *testing.T) {
 		wantNoFiles   []string // relative paths that must NOT exist
 	}{
 		{
-			name:          "happy path — ubuntu, redhat, alpine with multiple versions",
+			name:          "happy path — ubuntu, redhat, alpine, oracle with multiple versions",
 			repoDir:       "testdata/repo",
-			supportedOSes: []string{"ubuntu", "redhat", "alpine"},
+			supportedOSes: []string{"ubuntu", "redhat", "alpine", "oracle"},
 			wantFiles: []string{
 				"ubuntu/20.04/curl.json",
 				"redhat/9/curl.json",
 				"alpine/3.18/curl.json",
 				"alpine/3.19/curl.json",
+				"oracle/8/curl.json",
+				"oracle/9/curl.json",
 			},
 		},
 		{
