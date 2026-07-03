@@ -7,11 +7,13 @@ on:
 jobs:
   update:
     name: Update repo vuln-list
+    # Upstream aquasec's `trivy-large-1` label is a self-hosted runner that
+    # doesn't exist in your fork. This fork runs only the rapidfort target, so
+    # a standard GitHub-hosted runner is sufficient.
     runs-on: ubuntu-latest
     permissions:
       contents: read
     env:
-      GITHUB_TOKEN: ${{ secrets.ORG_REPO_TOKEN }}
       VULN_LIST_DIR: "vuln-list"
     steps:
       - name: Check out code
@@ -24,11 +26,17 @@ jobs:
         with:
           go-version-file: go.mod
 
-      - name: Check out vuln-list repo
+      - name: Check out vuln-list-trivy-rf repo
+        # Retargeted from aquasec's `vuln-list` data repo to your own data repo.
+        # See RELEASE-GUIDE.md §1.3.1 for how to create it.
+        # If the repo is PUBLIC, replace the `token:` line with `token: ${{ secrets.GITHUB_TOKEN }}`
+        # and grant this workflow `permissions: contents: write` at the top level.
+        # If PRIVATE, create a PAT with `repo` scope on vuln-list-trivy-rf and store
+        # it as VULN_LIST_TRIVY_RF_TOKEN under Repo Settings → Secrets and variables → Actions.
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
-          repository: ${{ github.repository_owner }}/vuln-list
-          token: ${{ secrets.ORG_REPO_TOKEN }}
+          repository: ${{ github.repository_owner }}/vuln-list-trivy-rf
+          token: ${{ secrets.VULN_LIST_TRIVY_RF_TOKEN }}
           path: ${{ env.VULN_LIST_DIR }}
           persist-credentials: true # update.sh runs git push
 
@@ -40,89 +48,13 @@ jobs:
       - name: Compile vuln-list-update
         run: go build -o vuln-list-update .
 
+      # Upstream aquasec's 20+ per-source steps deleted for the fork.
+      # Reason: aquasec's `vuln-list` repo already covers those. The trivy-db
+      # build workflow clones `aquasec/vuln-list` directly and overlays this
+      # repo's rapidfort/ subtree on top — see RELEASE-GUIDE.md §1.5.
       - if: always()
-        name: Alpine Issue Tracker
-        run: ./scripts/update.sh alpine "Alpine Issue Tracker"
-
-      - if: always()
-        name: Alpine Unfixed Vulnerability Tracker
-        run: ./scripts/update.sh alpine-unfixed "Alpine Secshfixes Tracker"
-
-      - if: always()
-        name: Ubuntu CVE Tracker
-        run: ./scripts/update.sh ubuntu "Ubuntu CVE Tracker"
-
-      - if: always()
-        name: Amazon Linux AMI Security Advisory
-        run: ./scripts/update.sh amazon "Amazon Linux Security Center"
-
-      - if: always()
-        name: Oracle Linux OVAL
-        run: ./scripts/update.sh oracle-oval "Oracle Linux OVAL"
-
-      - if: always()
-        name: Photon CVE Advisory
-        run: ./scripts/update.sh photon "Photon Security Advisories"
-
-      - if: always()
-        name: CWE
-        run: ./scripts/update.sh cwe "CWE"
-
-      - if: always()
-        name: SUSE CVRF
-        run: ./scripts/update.sh suse-cvrf "SUSE CVRF"
-
-      - if: always()
-        name: GitLab Advisory Database
-        run: ./scripts/update.sh glad "GitLab Advisory Database"
-
-      - if: always()
-        name: AlmaLinux Security Advisory
-        run: ./scripts/update.sh alma "AlmaLinux Security Advisory"
-
-      - if: always()
-        name: Rocky Linux Security Advisory
-        run: ./scripts/update.sh rocky "Rocky Linux Security Advisory"
-
-      - if: always()
-        name: Azure Linux and CBL-Mariner Vulnerability Data
-        run: ./scripts/update.sh azure "Azure Linux and CBL-Mariner Vulnerability Data"
-
-      - if: always()
-        name: OSV Database (osv.dev)
-        run: ./scripts/update.sh osvdev "OSV Database"
-
-      - if: always()
-        name: Wolfi Secdb
-        run: ./scripts/update.sh wolfi "Wolfi Security Data"
-
-      - if: always()
-        name: Chainguard Secdb
-        run: ./scripts/update.sh chainguard "Chainguard Security Data"
-
-      - if: always()
-        name: openEuler CVE
-        run: ./scripts/update.sh openeuler "openEuler CVE Data"
-
-      - if: always()
-        name: Echo CVEs
-        run: ./scripts/update.sh echo "Echo CVE Data"
-
-      - if: always()
-        name: MinimOS Secdb
-        run: ./scripts/update.sh minimos "MinimOS Security Data"
-
-      - if: always()
-        name: Seal Security
-        run: ./scripts/update.sh seal "Seal Security Data"
-
-      - if: always()
-        name: EOL dates
-        run: ./scripts/update.sh eoldates "EOL dates"
-
-      - if: always()
-        name: Root CVE Tracker
-        run: ./scripts/update.sh rootio "Root CVE Feed Tracker"
+        name: RapidFort Advisories
+        run: ./scripts/update.sh rapidfort "RapidFort Advisories"
 
       - name: Microsoft Teams Notification
         uses: Skitionek/notify-microsoft-teams@e7a2493ac87dad8aa7a62f079f295e54ff511d88
